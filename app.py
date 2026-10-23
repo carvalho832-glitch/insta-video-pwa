@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 MAX_SIZE = 120 * 1024 * 1024
 DOWNLOAD_TIMEOUT = 90
-LINK_RE = re.compile(r"https?://[^\\s<>\\\"']+", re.I)
+LINK_RE = re.compile(r"https?://[^\s<>\"']+", re.I)
 CODE_RE = re.compile(r"^[A-Za-z0-9_-]{4,80}$")
 app = FastAPI(title="ReelSalva", docs_url=None, redoc_url=None)
 lock = threading.Lock()
