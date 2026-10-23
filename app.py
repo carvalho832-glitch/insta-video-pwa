@@ -1,0 +1,124 @@
+"""ReelSalva: download de videos publicos do Instagram. Sem login nem bypass."""
+from __future__ import annotations
+import logging
+import mimetypes
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from collections import defaultdict, deque
+from pathlib import Path
+from urllib.parse import urlparse
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+from starlette.background import BackgroundTask
+
+ROOT = Path(__file__).resolve().parent
+WEB = ROOT / "web"
+MAX_SIZE = 120 * 1024 * 1024
+DOWNLOAD_TIMEOUT = 90
+LINK_RE = re.compile(r"https?://[^\\s<>\\\"']+", re.I)
+CODE_RE = re.compile(r"^[A-Za-z0-9_-]{4,80}$")
+app = FastAPI(title="ReelSalva", docs_url=None, redoc_url=None)
+lock = threading.Lock()
+active = threading.BoundedSemaphore(2)
+hits = defaultdict(deque)
+log = logging.getLogger("reelsalva")
+
+class VideoLink(BaseModel):
+    url: str = Field(min_length=10, max_length=1500)
+
+def clean_link(value: str):
+    found = LINK_RE.search(value.strip())
+    if not found:
+        raise ValueError("Cole um link de Reel ou publicacao do Instagram.")
+    url = urlparse(found.group(0).rstrip(").,;!]"))
+    if (url.scheme != "https" or url.hostname not in {"instagram.com", "www.instagram.com", "m.instagram.com"} or
+            url.username or url.password or url.port is not None):
+        raise ValueError("Use um link https://www.instagram.com/reel/... ou /p/...")
+    parts = [s for s in url.path.split("/") if s]
+    if len(parts) < 2 or parts[0].lower() not in {"reel", "p", "tv"} or not CODE_RE.fullmatch(parts[1]):
+        raise ValueError("Este link nao aponta para um Reel ou post valido.")
+    return f"https://www.instagram.com/{parts[0].lower()}/{parts[1]}/", parts[1]
+
+def allow_request(ip: str):
+    now = time.monotonic()
+    with lock:
+        q = hits[ip]
+        while q and now - q[0] > 900:
+            q.popleft()
+        if len(q) >= 8:
+            return False
+        q.append(now)
+        if len(hits) > 3000:
+            for key, value in list(hits.items())[:1000]:
+                if not value or now - value[-1] > 900:
+                    hits.pop(key, None)
+        return True
+
+@app.get("/api/health")
+def health():
+    return {"ok": True, "service": "ReelSalva"}
+
+@app.post("/api/download")
+def download(body: VideoLink, request: Request):
+    try:
+        link, code = clean_link(body.url)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    ip = request.client.host if request.client else "unknown"
+    if not allow_request(ip):
+        raise HTTPException(429, "Muitas tentativas. Aguarde alguns minutos.")
+    if not active.acquire(blocking=False):
+        raise HTTPException(503, "Servico ocupado. Tente novamente em instantes.")
+    directory = Path(tempfile.mkdtemp(prefix="reelsalva-"))
+    try:
+        cmd = [
+            sys.executable, "-m", "yt_dlp",
+            "--no-playlist", "--no-progress", "--no-warnings", "--no-part",
+            "--max-filesize", "120M", "--socket-timeout", "15",
+            "--retries", "1", "--fragment-retries", "1",
+            "--format", "best[ext=mp4]/best",
+            "--output", str(directory / "video.%(ext)s"), link
+        ]
+        done = subprocess.run(cmd, capture_output=True, text=True, timeout=DOWNLOAD_TIMEOUT, check=False)
+        if done.returncode != 0:
+            log.warning("Instagram extractor returned code %d", done.returncode)
+            raise HTTPException(422, "Nao foi possivel baixar este video. Ele pode ser privado, indisponivel ou o Instagram pode estar exigindo login.")
+        videos = [p for p in directory.glob("video.*") if p.is_file() and p.suffix.lower() in {".mp4", ".mov", ".webm"}]
+        if not videos:
+            raise HTTPException(422, "O Instagram nao forneceu um arquivo de video.")
+        video = max(videos, key=lambda p: p.stat().st_size)
+        if video.stat().st_size > MAX_SIZE:
+            raise HTTPException(413, "O video supera o limite de 120 MB.")
+        return FileResponse(
+            video, filename=f"instagram-{code}{video.suffix.lower()}",
+            media_type=mimetypes.guess_type(video.name)[0] or "video/mp4",
+            headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+            background=BackgroundTask(shutil.rmtree, directory, ignore_errors=True))
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(504, "O Instagram demorou demais para responder. Tente novamente.") from exc
+    finally:
+        active.release()
+        if sys.exc_info()[0] is not None:
+            shutil.rmtree(directory, ignore_errors=True)
+
+@app.get("/")
+def index():
+    return FileResponse(WEB / "index.html", headers={"Cache-Control": "no-cache"})
+
+@app.get("/manifest.webmanifest")
+def manifest():
+    return FileResponse(WEB / "manifest.webmanifest", media_type="application/manifest+json")
+
+@app.get("/sw.js")
+def sw():
+    return FileResponse(WEB / "sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
+
+app.mount("/assets", StaticFiles(directory=WEB), name="assets")
