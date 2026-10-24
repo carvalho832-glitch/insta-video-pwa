@@ -21,7 +21,7 @@ from starlette.background import BackgroundTask
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
-MAX_SIZE = 120 * 1024 * 1024
+MAX_SIZE = 250 * 1024 * 1024
 DOWNLOAD_TIMEOUT = 90
 LINK_RE = re.compile(r"https?://[^\s<>\"']+", re.I)
 CODE_RE = re.compile(r"^[A-Za-z0-9_-]{4,80}$")
@@ -82,21 +82,34 @@ def download(body: VideoLink, request: Request):
         cmd = [
             sys.executable, "-m", "yt_dlp",
             "--no-playlist", "--no-progress", "--no-warnings", "--no-part",
-            "--max-filesize", "120M", "--socket-timeout", "15",
+            "--max-filesize", "250M", "--socket-timeout", "15",
             "--retries", "1", "--fragment-retries", "1",
-            "--format", "best[ext=mp4]/best",
+            "--format", "best[ext=mp4][height<=720]/best[ext=mp4]/best",
             "--output", str(directory / "video.%(ext)s"), link
         ]
         done = subprocess.run(cmd, capture_output=True, text=True, timeout=DOWNLOAD_TIMEOUT, check=False)
         if done.returncode != 0:
-            log.warning("Instagram extractor returned code %d", done.returncode)
-            raise HTTPException(422, "Nao foi possivel baixar este video. Ele pode ser privado, indisponivel ou o Instagram pode estar exigindo login.")
+            error = (done.stderr or "").lower()
+            if "larger than max-filesize" in error or "file is larger than" in error:
+                log.warning("Instagram extractor: file exceeds configured size limit, reel=%s", code)
+                raise HTTPException(413, "Este video supera o limite de 250 MB.")
+            if "429" in error or "too many requests" in error:
+                reason = "instagram_rate_limit"
+                message = "O Instagram limitou temporariamente o acesso. Tente novamente mais tarde."
+            elif "login" in error or "private" in error or "authentication" in error:
+                reason = "instagram_login_required"
+                message = "O Reel exige login ou permissao do autor. Nosso aplicativo aceita apenas videos publicos."
+            else:
+                reason = "instagram_unavailable"
+                message = "O Instagram nao liberou o video para nosso servidor. Tente a opcao Baixar dentro do Instagram."
+            log.warning("Instagram extractor failed (reason=%s, code=%s, reel=%s)", reason, done.returncode, code)
+            raise HTTPException(422, message)
         videos = [p for p in directory.glob("video.*") if p.is_file() and p.suffix.lower() in {".mp4", ".mov", ".webm"}]
         if not videos:
             raise HTTPException(422, "O Instagram nao forneceu um arquivo de video.")
         video = max(videos, key=lambda p: p.stat().st_size)
         if video.stat().st_size > MAX_SIZE:
-            raise HTTPException(413, "O video supera o limite de 120 MB.")
+            raise HTTPException(413, "O video supera o limite de 250 MB.")
         return FileResponse(
             video, filename=f"instagram-{code}{video.suffix.lower()}",
             media_type=mimetypes.guess_type(video.name)[0] or "video/mp4",
