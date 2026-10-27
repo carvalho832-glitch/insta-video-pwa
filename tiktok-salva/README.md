@@ -36,3 +36,7 @@ Crie um **Web Service** com o mesmo repositório, usando a branch \`tiktok-salva
 O serviço web requer Python com yt-dlp. Não funciona apenas com GitHub Pages, porque o navegador não pode extrair sozinho os MP4s de todos os links públicos.
 
 O Render Free pode hibernar e pode aplicar limites de banda. O TikTok também pode bloquear servidores ou mudar suas páginas.
+
+## Recuperacao de falhas na extracao
+
+O servico usa yt-dlp e repete a tentativa com um user-agent alternativo. Caso autorizado na interface (checkbox ligado por padrao com aviso), transmite **somente o link publico** para a API externa TikWM e recebe um MP4 quando disponivel. TikTok e TikWM podem bloquear esse acesso, logo nao ha garantia de sucesso. Nunca pede login/senha/cookies do usuario. Os downloads temporarios sao limitados em tamanho.
