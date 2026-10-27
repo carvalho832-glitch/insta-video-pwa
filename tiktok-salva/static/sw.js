@@ -1,4 +1,4 @@
-const CACHE = "tiksalva-shell-v1";
+const CACHE = "tiksalva-shell-v2";
 const SHELL = ["/", "/assets/icon.svg", "/manifest.webmanifest"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));
