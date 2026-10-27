@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tiksalva-pwa
+    runtime: python
+    plan: free
+    buildCommand: pip install -r tiktok-salva/requirements.txt
+    startCommand: cd tiktok-salva && uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit

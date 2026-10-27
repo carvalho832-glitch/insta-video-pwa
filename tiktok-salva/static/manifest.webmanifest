@@ -1,0 +1,19 @@
+{
+  "name": "TikSalva - Baixar Videos TikTok",
+  "short_name": "TikSalva",
+  "description": "Salve videos publicos do TikTok em MP4.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0d0d14",
+  "theme_color": "#101018",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
