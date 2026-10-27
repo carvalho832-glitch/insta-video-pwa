@@ -31,7 +31,7 @@
     input::placeholder{color:#777686}
     input:focus-visible{outline:2px solid var(--a);border-radius:8px}
     .paste{border:0;background:#333440;color:#f7f7fc;border-radius:11px;font-weight:700;padding:12px;cursor:pointer;white-space:nowrap}
-    .primary{width:100%;border:0;border-radius:15px;margin-top:15px;background:linear-gradient(100deg,var(--a),#5dd9ec);color:#07181a;min-height:56px;font-size:16px;font-weight:850;cursor:pointer;transition:filter .2s,transform .2s}
+    .alternative{display:flex;align-items:start;gap:9px;margin:15px 1px 0;color:#b9b8c7;font-size:12px;font-weight:450;line-height:1.45}.alternative input{flex:none;width:18px;height:18px;accent-color:var(--a);margin:1px 0 0;padding:0}.primary{width:100%;border:0;border-radius:15px;margin-top:15px;background:linear-gradient(100deg,var(--a),#5dd9ec);color:#07181a;min-height:56px;font-size:16px;font-weight:850;cursor:pointer;transition:filter .2s,transform .2s}
     .primary:active{transform:scale(.985)}
     .primary:disabled{cursor:wait;opacity:.7}
     .message{min-height:22px;color:#bab9c9;font-size:13px;line-height:1.5;margin:16px 3px 0}
@@ -64,13 +64,14 @@
   <header class="hero">
     <div class="eyebrow">Seu video em um toque</div>
     <h1>Viu no TikTok?<br><span>Salva aqui.</span></h1>
-    <p class="sub">Cole o link de um video publico e salve o arquivo MP4 direto no seu celular, sem baixar arquivos de legenda.</p>
+    <p class="sub">Cole o link de um video publico e salve o arquivo MP4 direto no seu celular, sem baixar arquivos de legenda separados.</p>
   </header>
   <main>
     <section class="panel" aria-labelledby="input-label">
       <form id="form">
         <label id="input-label" for="link">Link do TikTok</label>
         <div class="field"><input id="link" type="url" inputmode="url" autocomplete="url" placeholder="https://vm.tiktok.com/..." required maxlength="1800"><button type="button" class="paste" id="paste">Colar</button></div>
+        <label class="alternative"><input type="checkbox" id="fallback" checked> Permitir metodo alternativo caso o TikTok bloqueie (o link publico sera enviado ao servico externo TikWM).</label>
         <button class="primary" id="download" type="submit">↓ Baixar video em MP4</button>
       </form>
       <div class="loader" id="loader" role="progressbar" aria-label="Processando video"></div>
@@ -95,6 +96,7 @@
   const message=document.getElementById("message");
   const loader=document.getElementById("loader");
   const install=document.getElementById("install");
+  const fallback=document.getElementById("fallback");
   const pill=document.getElementById("top-pill");
   let promptEvent;
   function report(text,kind){message.textContent=text;message.className="message"+(kind?" "+kind:"");}
@@ -119,7 +121,7 @@
     try{
       const response=await fetch("/api/download",{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({url:url}),signal:controller.signal,cache:"no-store"
+        body:JSON.stringify({url:url,allow_external_fallback:fallback.checked}),signal:controller.signal,cache:"no-store"
       });
       if(!response.ok){
         let detail="O download falhou. Tente outro link.";
