@@ -1,6 +1,10 @@
 """ReelSalva: download de videos publicos do Instagram. Sem login nem bypass."""
 from __future__ import annotations
+import base64
+import binascii
+import hmac
 import logging
+import os
 import mimetypes
 import re
 import shutil
@@ -14,7 +18,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
@@ -30,6 +34,46 @@ lock = threading.Lock()
 active = threading.BoundedSemaphore(2)
 hits = defaultdict(deque)
 log = logging.getLogger("reelsalva")
+ACCESS_CODE = os.environ.get("REELSALVA_ACCESS_CODE", "").strip()
+
+@app.middleware("http")
+async def restrict_personal_access(request: Request, call_next):
+    # A public health endpoint lets Cloud Run check readiness.
+    if request.url.path == "/api/health":
+        return await call_next(request)
+
+    # Never expose a Cloud Run instance if the access code was omitted.
+    if os.environ.get("K_SERVICE") and not ACCESS_CODE:
+        return Response(
+            "ReelSalva requires REELSALVA_ACCESS_CODE on Cloud Run.",
+            status_code=503,
+            media_type="text/plain",
+        )
+
+    if ACCESS_CODE:
+        encoded = request.headers.get("Authorization", "")
+        try:
+            scheme, value = encoded.split(" ", 1)
+            decoded = (
+                base64.b64decode(value, validate=True).decode("utf-8")
+                if scheme.lower() == "basic" else ""
+            )
+        except (ValueError, UnicodeDecodeError, binascii.Error):
+            decoded = ""
+
+        if not hmac.compare_digest(decoded, "julio:" + ACCESS_CODE):
+            return Response(
+                "Acesso restrito ao proprietario do ReelSalva.",
+                status_code=401,
+                media_type="text/plain",
+                headers={
+                    "WWW-Authenticate": 'Basic realm="ReelSalva", charset="UTF-8"',
+                    "Cache-Control": "no-store",
+                },
+            )
+
+    return await call_next(request)
+
 
 class VideoLink(BaseModel):
     url: str = Field(min_length=10, max_length=1500)

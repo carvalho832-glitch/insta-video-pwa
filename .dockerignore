@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+*.mp4
+*.mov
+*.webm
+.env
+.env.*
+Dockerfile.*
+README.md
+CLOUD_RUN.md
+render.yaml
