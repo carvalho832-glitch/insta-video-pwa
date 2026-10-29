@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#110d23">
-<meta name="description" content="Baixe seus Reels públicos usando apenas o link de compartilhamento.">
+<meta name="description" content="Baixe vídeos públicos do Instagram e Facebook usando o link de compartilhamento.">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ReelSalva | Baixar vídeo do Instagram</title>
+<title>ReelSalva | Vídeos do Instagram e Facebook</title>
 <link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/assets/icon-192.png">
 <style>
 :root{color-scheme:dark;--bg:#110d23;--text:#f8f6ff;--sub:#b6b0cb;--line:rgba(255,255,255,.12);--pink:#ff569f;--purple:#9560ff;--green:#71e6b6}
@@ -17,6 +17,7 @@
 .top-tag{border:1px solid rgba(255,255,255,.1);padding:9px 12px;border-radius:40px;color:#c7c0d9;font-size:12px;font-weight:650;white-space:nowrap;background:#ffffff07}.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px;box-shadow:0 0 10px #71e6b680}
 .hero{text-align:center;padding:77px 12px 39px}.eyebrow{font-size:11px;font-weight:800;color:#bc9dff;letter-spacing:1.9px}.star{font-size:17px;color:#ef84cb;vertical-align:middle;margin-right:4px}h1{font-size:clamp(39px,7vw,64px);letter-spacing:-2.9px;line-height:1.13;margin:20px 0 18px;font-weight:850}.gradient-text{background:linear-gradient(90deg,#f687ba 4%,#b882fd 70%,#94a4ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}.intro{margin:0 auto;max-width:550px;color:var(--sub);line-height:1.65;font-size:16px}
 .download-card{max-width:620px;margin:0 auto;background:linear-gradient(145deg,rgba(36,29,60,.99),rgba(25,21,45,.98));padding:30px;border-radius:25px;border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px #08061475, inset 0 1px #ffffff0a}.card-head{display:flex;align-items:center;gap:13px;margin-bottom:29px}.badge-icon{width:47px;height:47px;border-radius:14px;background:#9d5dff23;display:grid;place-items:center;color:#c79aff;font-size:26px}.card-head h2{font-size:19px;margin:0 0 3px;letter-spacing:-.4px}.card-head p{font-size:13px;margin:0;color:var(--sub)}
+.platform-tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 25px}.platform-tab{display:flex;justify-content:center;gap:9px;align-items:center;min-height:46px;border:1px solid rgba(255,255,255,.13);color:#bcb1d3;background:#ffffff08;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer}.platform-tab.active{color:#fff;border-color:#bb88fa;background:linear-gradient(115deg,#b66dff3a,#fa549b29);box-shadow:0 0 0 1px #be83ff3b}.platform-tab:focus-visible{outline:3px solid #d3aaff;outline-offset:3px}.platform-tab .social-mark{display:grid;place-items:center;width:23px;height:23px;border-radius:7px;background:#ffffff15;font-size:15px}
 label{font-size:13px;font-weight:700;display:block;margin-bottom:10px}.field{position:relative;display:flex;align-items:center;border:1px solid #ffffff23;background:#100e21;border-radius:13px;min-height:57px;transition:border-color .18s,box-shadow .18s}.field:focus-within{border-color:#af7aff;box-shadow:0 0 0 3px #ad74ff22}.field-icon{color:#918ba9;margin-left:15px;flex-shrink:0}.field input{min-width:0;flex:1;padding:15px 8px 15px 12px;background:transparent;color:#f5f2ff;border:0;outline:0;font-size:14px}.field input::placeholder{color:#716b88}.paste{color:#d8b4ff;border:0;border-radius:9px;background:#ad78ff23;padding:8px 11px;margin-right:9px;cursor:pointer;font-weight:750;font-size:12px}.helper{color:#8f88a7;font-size:12px;margin:9px 2px 22px}
 .download-button{border:0;border-radius:13px;min-height:58px;width:100%;display:flex;justify-content:center;gap:11px;align-items:center;background:linear-gradient(96deg,#ec4b9a,#9362ff);color:white;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 9px 28px #d357d531}.download-button:disabled{opacity:.6;cursor:wait}.arrow{position:absolute;right:53px;font-size:23px;font-weight:400;opacity:.9}
 .status{margin-top:17px;border-radius:11px;padding:12px 14px;font-size:13px;line-height:1.5;background:#a57ef21b;color:#ddc9ff;border:1px solid #ae88ff30}.status.error{color:#ffadb9;background:#ff4f6c15;border-color:#ff4f6c30}.status.success{color:#a0f0cd;background:#6be6b51a;border-color:#6be6b533}.progress-track{height:6px;border-radius:20px;background:#ffffff16;margin-top:12px;overflow:hidden}.progress-bar{height:100%;width:4%;background:linear-gradient(90deg,#ec4b9a,#9362ff);transition:width .15s}.privacy{display:flex;gap:7px;align-items:center;justify-content:center;color:#918aa6;font-size:12px;margin-top:22px}
@@ -28,30 +29,89 @@ footer{max-width:665px;margin:38px auto 0;text-align:center;line-height:1.6;font
 </head><body>
 <div class="glow glow-one" aria-hidden="true"></div><div class="glow glow-two" aria-hidden="true"></div>
 <div class="shell"><header class="topbar"><a class="brand" href="/"><span class="brand-icon" aria-hidden="true">↧</span> Reel<span class="brand-accent">Salva</span></a><span class="top-tag"><span class="live-dot"></span> PWA para Android</span></header>
-<main><section class="hero"><div class="eyebrow"><span class="star">✦</span> SIMPLES. RÁPIDO. SEM COMPLICAÇÃO.</div><h1>Seu Reel salvo<br><span class="gradient-text">em dois toques.</span></h1><p class="intro">Copie o link de compartilhamento do Instagram, cole aqui e baixe o vídeo no celular.</p></section>
-<section class="download-card"><div class="card-head"><span class="badge-icon">↗</span><div><h2>Baixar vídeo</h2><p>Reels e publicações públicas em vídeo</p></div></div>
-<form id="downloadForm" novalidate><label for="instagramUrl">Link de compartilhamento</label><div class="field"><span class="field-icon">🔗</span><input id="instagramUrl" name="url" type="text" required autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://www.instagram.com/reel/..."><button class="paste" id="pasteButton" type="button">Colar</button></div><p class="helper">Também aceita o texto copiado do botão Compartilhar.</p>
+<main><section class="hero"><div class="eyebrow"><span class="star">✦</span> SIMPLES. RÁPIDO. SEM COMPLICAÇÃO.</div><h1>Seu vídeo salvo<br><span class="gradient-text">em dois toques.</span></h1><p class="intro">Copie o link do Instagram ou Facebook, cole aqui e baixe o vídeo no celular.</p></section>
+<section class="download-card"><div class="card-head"><span class="badge-icon">↗</span><div><h2>Baixar vídeo</h2><p id="platformHint">Reels e publicações públicas do Instagram</p></div></div>
+<div class="platform-tabs" role="tablist" aria-label="Escolha a plataforma"><button type="button" class="platform-tab active" role="tab" id="tabInstagram" aria-selected="true"><span class="social-mark">◎</span> Instagram</button><button type="button" class="platform-tab" role="tab" id="tabFacebook" aria-selected="false"><span class="social-mark">f</span> Facebook</button></div>
+<form id="downloadForm" novalidate><label for="videoUrl">Link de compartilhamento</label><div class="field"><span class="field-icon">🔗</span><input id="videoUrl" name="url" type="text" required autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://www.instagram.com/reel/..."><button class="paste" id="pasteButton" type="button">Colar</button></div><p class="helper">Aceita links de compartilhamento de Reels e vídeos públicos.</p>
 <button class="download-button" id="downloadButton" type="submit"><span>⬇</span><span id="buttonText">Baixar vídeo MP4</span><span class="arrow">→</span></button></form>
-<div class="status" id="status" role="status" aria-live="polite" hidden></div><div class="progress-track" id="progressTrack" hidden><div class="progress-bar" id="progressBar"></div></div><div class="privacy">🛡️ Sem login. Sem pedir senha. Apenas links públicos.</div></section>
-<section class="steps"><div class="step"><span class="step-number">01</span><div><strong>Compartilhe</strong><p>No Instagram, toque em Compartilhar e copie o link.</p></div></div><div class="step"><span class="step-number">02</span><div><strong>Cole</strong><p>Coloque o link no campo acima.</p></div></div><div class="step"><span class="step-number">03</span><div><strong>Baixe</strong><p>Toque no botão para salvar o vídeo.</p></div></div></section>
+<div class="status" id="status" role="status" aria-live="polite" hidden></div><div class="progress-track" id="progressTrack" hidden><div class="progress-bar" id="progressBar"></div></div><div class="privacy">🛡️ Sem login nas redes sociais. Apenas vídeos públicos.</div></section>
+<section class="steps"><div class="step"><span class="step-number">01</span><div><strong>Compartilhe</strong><p>No Instagram ou Facebook, toque em Compartilhar e copie o link.</p></div></div><div class="step"><span class="step-number">02</span><div><strong>Cole</strong><p>Coloque o link no campo acima.</p></div></div><div class="step"><span class="step-number">03</span><div><strong>Baixe</strong><p>Toque no botão para salvar o vídeo.</p></div></div></section>
 <section class="install-card"><div class="install-emoji">📲</div><div><strong>Quer usar como aplicativo?</strong><p>Instale na tela inicial e abra com um toque.</p></div><button id="installButton" type="button">Instalar</button></section></main>
-<footer>ReelSalva não é afiliado ao Instagram ou à Meta. Baixe apenas vídeos seus ou que tenha permissão para salvar. Alguns links podem ser bloqueados pelo Instagram.</footer></div>
+<footer>ReelSalva não é afiliado à Meta. Baixe apenas vídeos seus ou que tenha autorização para salvar. Alguns links do Instagram e Facebook podem exigir login ou ser bloqueados.</footer></div>
 <script>
-const form=document.getElementById('downloadForm'),field=document.getElementById('instagramUrl'),paste=document.getElementById('pasteButton'),btn=document.getElementById('downloadButton'),label=document.getElementById('buttonText'),status=document.getElementById('status'),track=document.getElementById('progressTrack'),bar=document.getElementById('progressBar');let pendingInstall=null;
+const form=document.getElementById('downloadForm'),field=document.getElementById('videoUrl'),paste=document.getElementById('pasteButton'),btn=document.getElementById('downloadButton'),label=document.getElementById('buttonText'),status=document.getElementById('status'),track=document.getElementById('progressTrack'),bar=document.getElementById('progressBar');let pendingInstall=null;
 function message(text,type){status.hidden=false;status.className='status'+(type?' '+type:'');status.textContent=text}
 function normalize(text){const match=String(text||'').match(/https?:\/\/[^\s<>"']+/i);return match?match[0].replace(/[),.;!\]]+$/,''):String(text||'').trim()}
-function valid(text){try{const u=new URL(normalize(text));return u.protocol==='https:'&&['instagram.com','www.instagram.com','m.instagram.com'].includes(u.hostname)&&/^\/(reel|p|tv)\/[a-zA-Z0-9_-]{4,80}(?:\/|$)/.test(u.pathname)}catch{return false}}
+const tabInstagram=document.getElementById('tabInstagram'),tabFacebook=document.getElementById('tabFacebook'),platformHint=document.getElementById('platformHint');
+let platform='instagram';
+function choose(p){
+  platform=p;
+  tabInstagram.classList.toggle('active',p==='instagram');
+  tabFacebook.classList.toggle('active',p==='facebook');
+  tabInstagram.setAttribute('aria-selected',p==='instagram'?'true':'false');
+  tabFacebook.setAttribute('aria-selected',p==='facebook'?'true':'false');
+  field.placeholder=p==='facebook'?'https://www.facebook.com/share/v/...':'https://www.instagram.com/reel/...';
+  platformHint.textContent=p==='facebook'?'Vídeos e Reels públicos do Facebook':'Reels e publicações públicas do Instagram';
+}
+function networkOf(text){
+  try{
+    const u=new URL(normalize(text)),h=u.hostname.toLowerCase(),p=u.pathname;
+    if(u.protocol!=='https:'||u.username||u.password||u.port)return null;
+    if(['instagram.com','www.instagram.com','m.instagram.com'].includes(h)){
+      return /^\/(reel|p|tv)\/[a-zA-Z0-9_-]{4,80}(?:\/|$)/.test(p)?'instagram':null;
+    }
+    if(['fb.watch','www.fb.watch'].includes(h)){
+      return /^\/[a-zA-Z0-9_-]{4,80}\/?$/.test(p)?'facebook':null;
+    }
+    if(['facebook.com','www.facebook.com','m.facebook.com','mbasic.facebook.com','web.facebook.com'].includes(h)){
+      const share=/^\/share\/(v|r)\/[a-zA-Z0-9_-]{4,80}\/?$/.test(p);
+      const reel=/^\/reels?\/[a-zA-Z0-9_-]{4,80}\/?$/.test(p);
+      const video=/^\/(?:[^/]+\/)?videos\/[a-zA-Z0-9_-]{4,80}\/?$/.test(p);
+      const watch=(p==='/watch/'||p==='/watch'||p==='/video.php')&&/^\d{5,30}$/.test(u.searchParams.get('v')||'');
+      return share||reel||video||watch?'facebook':null;
+    }
+  }catch{}
+  return null;
+}
 function busy(state){btn.disabled=state;label.textContent=state?'Preparando seu vídeo...':'Baixar vídeo MP4';track.hidden=!state;bar.style.width=state?'8%':'4%'}
-paste.onclick=async()=>{try{field.value=normalize(await navigator.clipboard.readText());field.focus()}catch{message('Toque e segure no campo e escolha “Colar”.')}};
-const params=new URLSearchParams(location.search),shared=[params.get('url'),params.get('text'),params.get('title')].filter(Boolean).join(' ');if(shared){field.value=normalize(shared);history.replaceState({},document.title,'/')}
-form.onsubmit=async(e)=>{e.preventDefault();const url=normalize(field.value);if(!valid(url)){message('Cole um link válido do Instagram, por exemplo https://www.instagram.com/reel/ABC123/','error');field.focus();return}
-busy(true);message('Buscando o vídeo no Instagram. Isso pode levar alguns instantes.');let objectUrl=null;
-try{const res=await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-if(!res.ok){let msg='Não foi possível baixar o vídeo.';try{msg=(await res.json()).detail||msg}catch{}throw Error(msg)}
-const total=Number(res.headers.get('content-length'))||0;let received=0,blob;
-if(res.body&&res.body.getReader){const reader=res.body.getReader(),parts=[];while(true){const item=await reader.read();if(item.done)break;parts.push(item.value);received+=item.value.byteLength;if(total){let n=Math.min(100,Math.round(received/total*100));bar.style.width=n+'%';message('Transferindo vídeo... '+n+'%')}else{message('Transferindo vídeo... '+(received/1048576).toFixed(1)+' MB')}}blob=new Blob(parts,{type:res.headers.get('content-type')||'video/mp4'})}else{blob=await res.blob()}
-const disposition=res.headers.get('content-disposition')||'',found=disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)/i),filename=found?decodeURIComponent(found[1]).replace(/[^a-zA-Z0-9._-]/g,'_'):'instagram-video.mp4';objectUrl=URL.createObjectURL(blob);const a=document.createElement('a');a.href=objectUrl;a.download=filename;document.body.appendChild(a);a.click();a.remove();message('Download iniciado! Confira a pasta Downloads. ✅','success')
-}catch(err){message(err.message||'Falha na conexão.','error')}finally{busy(false);if(objectUrl)setTimeout(()=>URL.revokeObjectURL(objectUrl),60000)}
+tabInstagram.onclick=()=>choose('instagram');
+tabFacebook.onclick=()=>choose('facebook');
+function synchronize(){const p=networkOf(field.value);if(p&&p!==platform)choose(p)}
+field.addEventListener('input',synchronize);
+paste.onclick=async()=>{try{field.value=normalize(await navigator.clipboard.readText());synchronize();field.focus()}catch{message('Toque e segure no campo e escolha “Colar”.')}};
+const params=new URLSearchParams(location.search),shared=[params.get('url'),params.get('text'),params.get('title')].filter(Boolean).join(' ');
+if(shared){field.value=normalize(shared);synchronize();history.replaceState({},document.title,'/')}
+form.onsubmit=async(e)=>{
+  e.preventDefault();
+  const url=normalize(field.value),detected=networkOf(url);
+  if(!detected){
+    message('Cole um link de vídeo público do Instagram ou Facebook. Use o botão Compartilhar → Copiar link.','error');
+    field.focus();return;
+  }
+  choose(detected);
+  busy(true);
+  message('Buscando o vídeo no '+(detected==='facebook'?'Facebook':'Instagram')+'. Isso pode levar alguns instantes.');
+  let objectUrl=null;
+  try{
+    const res=await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    if(!res.ok){let msg='Não foi possível baixar o vídeo.';try{msg=(await res.json()).detail||msg}catch{}throw Error(msg)}
+    const total=Number(res.headers.get('content-length'))||0;let received=0,blob;
+    if(res.body&&res.body.getReader){
+      const reader=res.body.getReader(),parts=[];
+      while(true){
+        const item=await reader.read();if(item.done)break;
+        parts.push(item.value);received+=item.value.byteLength;
+        if(total){const n=Math.min(100,Math.round(received/total*100));bar.style.width=n+'%';message('Transferindo vídeo... '+n+'%')}
+        else{message('Transferindo vídeo... '+(received/1048576).toFixed(1)+' MB')}
+      }
+      blob=new Blob(parts,{type:res.headers.get('content-type')||'video/mp4'})
+    }else{blob=await res.blob()}
+    const disposition=res.headers.get('content-disposition')||'',found=disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)/i),filename=found?decodeURIComponent(found[1]).replace(/[^a-zA-Z0-9._-]/g,'_'):detected+'-video.mp4';
+    objectUrl=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=objectUrl;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    message('Download iniciado! Confira a pasta Downloads. ✅','success');
+  }catch(err){message(err.message||'Falha na conexão.','error')}
+  finally{busy(false);if(objectUrl)setTimeout(()=>URL.revokeObjectURL(objectUrl),60000)}
 };
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pendingInstall=e});
 document.getElementById('installButton').onclick=async()=>{if(pendingInstall){pendingInstall.prompt();await pendingInstall.userChoice;pendingInstall=null}else{message('Abra no Chrome, toque em ⋮ e escolha “Adicionar à tela inicial” ou “Instalar app”.')}};
