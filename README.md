@@ -18,10 +18,14 @@ uvicorn app:app --reload
 
 Abra http://localhost:8000.
 
+## Publicar no Google Cloud Run
+
+O projeto agora inclui `Dockerfile`, proteção por senha e instruções em [CLOUD_RUN.md](CLOUD_RUN.md). É necessário ter um projeto com faturamento habilitado, mesmo que o uso fique no nível gratuito. A migração para o Cloud Run ainda depende dessa configuração.
+
 ## Publicar em Render
 Conecte este repositório a um Web Service Python gratuito. Build: `pip install -r requirements.txt`. Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`. O arquivo `render.yaml` também contém essas definições.
 
 ## Limitações
-Somente vídeos públicos, sem login ou cookies. O Instagram pode bloquear vídeos ou IPs de datacenters, e nem todos os Reels funcionarão. O serviço limita download a 120 MB, 8 tentativas a cada 15 minutos por IP e 2 downloads simultâneos. Para uso de grande escala, implante autenticação, rate limiting distribuído e proteção de rede.
+Somente vídeos públicos, sem login ou cookies. O Instagram pode bloquear vídeos ou IPs de datacenters, e nem todos os Reels funcionarão. O serviço limita download a 250 MB, 8 tentativas a cada 15 minutos por IP e 2 downloads simultâneos. Para uso de grande escala, implante autenticação, rate limiting distribuído e proteção de rede.
 
 Não afiliado ao Instagram/Meta. Respeite direitos autorais e termos aplicáveis.
