@@ -18,7 +18,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
@@ -179,11 +179,26 @@ def download(body: VideoLink, request: Request):
         video = max(videos, key=lambda p: p.stat().st_size)
         if video.stat().st_size > MAX_SIZE:
             raise HTTPException(413, "O video supera o limite de 250 MB.")
-        return FileResponse(
-            video, filename=f"{platform}-{code}{video.suffix.lower()}",
+        # Cloud Run limits buffered HTTP/1 responses to 32 MiB.
+        # Stream without Content-Length so Uvicorn uses chunked transfer encoding.
+        # Keep the temporary file until the stream finishes or is cancelled.
+        def read_chunks():
+            with video.open("rb") as file_handle:
+                while block := file_handle.read(512 * 1024):
+                    yield block
+
+        filename = f"{platform}-{code}{video.suffix.lower()}"
+        log.info("video streaming: service=%s, size_bytes=%s, id=%s", platform, video.stat().st_size, code)
+        return StreamingResponse(
+            read_chunks(),
             media_type=mimetypes.guess_type(video.name)[0] or "video/mp4",
-            headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
-            background=BackgroundTask(shutil.rmtree, directory, ignore_errors=True))
+            headers={
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff",
+                "Content-Disposition": f'attachment; filename="{filename}"',
+            },
+            background=BackgroundTask(shutil.rmtree, directory, ignore_errors=True),
+        )
     except subprocess.TimeoutExpired as exc:
         raise HTTPException(504, "O site demorou demais para responder. Tente novamente.") from exc
     finally:
