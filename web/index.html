@@ -94,7 +94,14 @@ form.onsubmit=async(e)=>{
   let objectUrl=null;
   try{
     const res=await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-    if(!res.ok){let msg='Não foi possível baixar o vídeo.';try{msg=(await res.json()).detail||msg}catch{}throw Error(msg)}
+    if(!res.ok){
+      let msg='Não foi possível baixar o vídeo (erro '+res.status+').';
+      if(res.status===401)msg='Sua sessão expirou. Feche o app, abra de novo e faça login.';
+      else if(res.status===429)msg='Servidor ocupado no momento. Aguarde um instante e tente novamente.';
+      else if(res.status>=500)msg='O servidor interrompeu a transferência. Tente novamente em instantes.';
+      try{const data=await res.json();if(data.detail)msg=data.detail}catch{}
+      throw Error(msg);
+    }
     const total=Number(res.headers.get('content-length'))||0;let received=0,blob;
     if(res.body&&res.body.getReader){
       const reader=res.body.getReader(),parts=[];
