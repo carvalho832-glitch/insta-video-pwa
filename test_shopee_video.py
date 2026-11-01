@@ -72,7 +72,7 @@ class ShopeeTests(unittest.TestCase):
                 s.fetch_video_url(SHORT)
 
     def test_stream_valid_mp4(self):
-        data = b"\\x00\\x00\\x00\\x18ftypisom" + b"0" * 1024
+        data = bytes([0, 0, 0, 24]) + b"ftypisom" + b"0" * 1024
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "test.mp4"
             with patch.object(s, "fetch_video_url", return_value=CDN):
