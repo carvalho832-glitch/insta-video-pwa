@@ -79,7 +79,7 @@ def normalize_shopee_link(url: str) -> tuple[str, str]:
     return f"https://{host}/{parts[0]}", parts[0]
 
 
-def fetch_video_url(shopee_link: str) -> str:
+def fetch_video_url(shopee_link: str, *, prefer_clean: bool = False) -> str:
     page_url, _ = normalize_shopee_link(shopee_link)
     opener = build_opener(SafeRedirect(_page_host))
     request = Request(page_url, headers={
@@ -107,8 +107,25 @@ def fetch_video_url(shopee_link: str) -> str:
     try:
         data = json.loads(match.group(1))
         video = data["props"]["pageProps"]["mediaInfo"]["video"]
-        # Conteúdo que a própria página pública disponibiliza, com marca d'água.
-        media_url = video.get("watermarkVideoUrl") or video.get("videoUrl")
+        # Só utiliza fontes disponibilizadas expressamente no conteúdo público.
+        # Não tenta deduzir endpoints, remover elementos ou contornar autenticação.
+        if prefer_clean:
+            media_url = next((
+                video.get(field) for field in (
+                    "originalVideoUrl", "withoutWatermarkVideoUrl",
+                    "noWatermarkVideoUrl", "videoUrl"
+                )
+                if isinstance(video.get(field), str) and video.get(field)
+                and video.get(field) != video.get("watermarkVideoUrl")
+            ), None)
+            if not media_url:
+                raise ShopeeVideoError(
+                    422,
+                    "Este vídeo não oferece um arquivo original sem marca no compartilhamento público. "
+                    "Peça a versão original ao criador ou escolha baixar com marca."
+                )
+        else:
+            media_url = video.get("watermarkVideoUrl") or video.get("videoUrl")
     except (ValueError, TypeError, KeyError, AttributeError) as exc:
         raise ShopeeVideoError(422, "Não foi possível identificar o MP4 neste Shopee Vídeo.") from exc
     if not isinstance(media_url, str) or not _is_https_url(media_url, _cdn_host):
@@ -118,8 +135,8 @@ def fetch_video_url(shopee_link: str) -> str:
     return media_url
 
 
-def download_shopee(link: str, output: Path) -> Path:
-    media_url = fetch_video_url(link)
+def download_shopee(link: str, output: Path, *, prefer_clean: bool = False) -> Path:
+    media_url = fetch_video_url(link, prefer_clean=prefer_clean)
     request = Request(media_url, headers={
         "User-Agent": USER_AGENT,
         "Referer": "https://sv.shopee.com.br/",
