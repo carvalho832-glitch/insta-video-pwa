@@ -24,8 +24,8 @@ NEXT_DATA = re.compile(
     r'<script\b(?=[^>]*\bid=["\']__NEXT_DATA__["\'])[^>]*>(.*?)</script>',
     flags=re.I | re.S,
 )
-USER_AGENT = ("Mozilla/5.0 (Linux; Android 14; Mobile) "
-              "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36")
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+              "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 
 
 class ShopeeVideoError(Exception):
