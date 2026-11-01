@@ -23,11 +23,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 from shopee_video import ShopeeVideoError, download_shopee, normalize_shopee_link
+from download_quality import build_command
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 MAX_SIZE = 250 * 1024 * 1024
-DOWNLOAD_TIMEOUT = 90
+DOWNLOAD_TIMEOUT = 165
 LINK_RE = re.compile(r"https?://[^\s<>\"']+", re.I)
 CODE_RE = re.compile(r"^[A-Za-z0-9_-]{4,80}$")
 app = FastAPI(title="ReelSalva", docs_url=None, redoc_url=None)
@@ -78,6 +79,7 @@ async def restrict_personal_access(request: Request, call_next):
 
 class VideoLink(BaseModel):
     url: str = Field(min_length=10, max_length=1500)
+    quality: str = Field(default="max", pattern=r"^(max|1080|720)$")
 
 def clean_link(value: str):
     found = LINK_RE.search(value.strip())
@@ -162,14 +164,7 @@ def download(body: VideoLink, request: Request):
                 log.warning("shopee extractor failed (status=%s, video=%s)", exc.status, code)
                 raise HTTPException(exc.status, str(exc)) from exc
         else:
-            cmd = [
-                sys.executable, "-m", "yt_dlp",
-                "--no-playlist", "--no-progress", "--no-warnings", "--no-part",
-                "--max-filesize", "250M", "--socket-timeout", "15",
-                "--retries", "1", "--fragment-retries", "1",
-                "--format", "best[ext=mp4][height<=720]/best[ext=mp4]/best",
-                "--output", str(directory / "video.%(ext)s"), link
-            ]
+            cmd = build_command(link, str(directory / "video.%(ext)s"), body.quality)
             done = subprocess.run(cmd, capture_output=True, text=True, timeout=DOWNLOAD_TIMEOUT, check=False)
             if done.returncode != 0:
                 error = (done.stderr or "").lower()
@@ -194,6 +189,18 @@ def download(body: VideoLink, request: Request):
         video = max(videos, key=lambda p: p.stat().st_size)
         if video.stat().st_size > MAX_SIZE:
             raise HTTPException(413, "O video supera o limite de 250 MB.")
+        resolution = "desconhecida"
+        try:
+            info = subprocess.run(
+                ["ffprobe", "-v", "error", "-select_streams", "v:0",
+                 "-show_entries", "stream=width,height", "-of", "csv=p=0:s=x", str(video)],
+                capture_output=True, text=True, timeout=8, check=False
+            )
+            candidate = info.stdout.strip().splitlines()[0] if info.stdout.strip() else ""
+            if re.fullmatch(r"\d{2,5}x\d{2,5}", candidate):
+                resolution = candidate
+        except (OSError, subprocess.TimeoutExpired):
+            pass
         # Cloud Run limits buffered HTTP/1 responses to 32 MiB.
         # Stream without Content-Length so Uvicorn uses chunked transfer encoding.
         # Keep the temporary file until the stream finishes or is cancelled.
@@ -210,6 +217,7 @@ def download(body: VideoLink, request: Request):
             headers={
                 "Cache-Control": "no-store",
                 "X-Content-Type-Options": "nosniff",
+                "X-ReelSalva-Resolution": resolution,
                 "Content-Disposition": f'attachment; filename="{filename}"',
             },
             background=BackgroundTask(shutil.rmtree, directory, ignore_errors=True),

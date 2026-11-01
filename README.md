@@ -2,6 +2,14 @@
 
 PWA simples para baixar **Reels e vídeos públicos do Instagram, Facebook e Shopee Vídeo**, desde que sejam seus ou você tenha autorização para salvá-los.
 
+## Qualidade dos downloads
+
+- **Máxima qualidade disponível (padrão)**: Instagram e Facebook selecionam a melhor combinação de vídeo e áudio publicada, sem o antigo limite de 720p.
+- **Full HD até 1080p** e **HD até 720p**: procuram a melhor fonte dentro do limite escolhido, sem ampliar artificialmente.
+- FFmpeg combina os fluxos de áudio e vídeo e tenta entregar MP4 sem recodificar os pixels.
+- **Shopee Vídeo:** links públicos frequentemente oferecem um único MP4; a qualidade é a da fonte e o seletor não cria resolução adicional.
+- Máximo de 250 MB por vídeo. Arquivos grandes podem demorar mais. Somente conteúdo público autorizado.
+
 ## Como usar
 1. Copie o link de compartilhamento do vídeo no Instagram, Facebook ou Shopee Vídeo.
 2. Abra o PWA, cole o link e toque em **Baixar vídeo MP4**.
