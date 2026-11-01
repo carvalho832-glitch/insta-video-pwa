@@ -1,4 +1,4 @@
-"""ReelSalva: videos publicos do Instagram e Facebook, sem login ou bypass."""
+"""ReelSalva: vídeos públicos Instagram, Facebook e Shopee, sem login ou bypass."""
 from __future__ import annotations
 import base64
 import binascii
@@ -22,6 +22,7 @@ from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
+from shopee_video import ShopeeVideoError, download_shopee, normalize_shopee_link
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
@@ -81,13 +82,20 @@ class VideoLink(BaseModel):
 def clean_link(value: str):
     found = LINK_RE.search(value.strip())
     if not found:
-        raise ValueError("Cole um link de vídeo do Instagram ou Facebook.")
+        raise ValueError("Cole um link de vídeo do Instagram, Facebook ou Shopee.")
     url = urlparse(found.group(0).rstrip(").,;!]"))
     host = (url.hostname or "").lower()
     if url.scheme != "https" or url.username or url.password or url.port is not None:
-        raise ValueError("Use o link HTTPS de compartilhamento do Instagram ou Facebook.")
+        raise ValueError("Use um link HTTPS de compartilhamento válido.")
 
     parts = [p for p in url.path.split("/") if p]
+    if host in {"br.shp.ee", "shp.ee", "x.shp.ee", "sv.shopee.com.br"}:
+        try:
+            link, code = normalize_shopee_link(found.group(0).rstrip(").,;!]"))
+        except ShopeeVideoError as exc:
+            raise ValueError(str(exc)) from exc
+        return link, code, "shopee"
+
     if host in {"instagram.com", "www.instagram.com", "m.instagram.com"}:
         if len(parts) < 2 or parts[0].lower() not in {"reel", "p", "tv"} or not CODE_RE.fullmatch(parts[1]):
             raise ValueError("Este link não aponta para um Reel ou publicação válida.")
@@ -113,7 +121,7 @@ def clean_link(value: str):
             return f"https://www.facebook.com/{'/'.join(parts)}/", parts[-1], "facebook"
         raise ValueError("Link do Facebook não reconhecido. Use Compartilhar → Copiar link de um vídeo ou Reel público.")
 
-    raise ValueError("Por enquanto, aceitamos apenas links do Instagram ou Facebook.")
+    raise ValueError("Aceitamos apenas links públicos de Instagram, Facebook e Shopee Vídeo.")
 
 def allow_request(ip: str):
     now = time.monotonic()
@@ -147,32 +155,39 @@ def download(body: VideoLink, request: Request):
         raise HTTPException(503, "Servico ocupado. Tente novamente em instantes.")
     directory = Path(tempfile.mkdtemp(prefix="reelsalva-"))
     try:
-        cmd = [
-            sys.executable, "-m", "yt_dlp",
-            "--no-playlist", "--no-progress", "--no-warnings", "--no-part",
-            "--max-filesize", "250M", "--socket-timeout", "15",
-            "--retries", "1", "--fragment-retries", "1",
-            "--format", "best[ext=mp4][height<=720]/best[ext=mp4]/best",
-            "--output", str(directory / "video.%(ext)s"), link
-        ]
-        done = subprocess.run(cmd, capture_output=True, text=True, timeout=DOWNLOAD_TIMEOUT, check=False)
-        if done.returncode != 0:
-            error = (done.stderr or "").lower()
-            if "larger than max-filesize" in error or "file is larger than" in error:
-                log.warning("%s extractor: file exceeds configured size limit, video=%s", platform, code)
-                raise HTTPException(413, "Este video supera o limite de 250 MB.")
-            service = "Facebook" if platform == "facebook" else "Instagram"
-            if "429" in error or "too many requests" in error:
-                reason = "rate_limit"
-                message = f"O {service} limitou temporariamente o acesso. Tente novamente mais tarde."
-            elif any(word in error for word in ("login", "private", "authentication", "cookies", "not available", "not accessible")):
-                reason = "login_or_private"
-                message = f"Este vídeo do {service} pode ser privado ou exigir login. Só baixamos vídeos públicos."
-            else:
-                reason = "video_unavailable"
-                message = f"O {service} não liberou este vídeo para o servidor. Confira se o vídeo é público e tente novamente."
-            log.warning("%s extractor failed (reason=%s, code=%s, video=%s)", platform, reason, done.returncode, code)
-            raise HTTPException(422, message)
+        if platform == "shopee":
+            try:
+                download_shopee(link, directory / "video.mp4")
+            except ShopeeVideoError as exc:
+                log.warning("shopee extractor failed (status=%s, video=%s)", exc.status, code)
+                raise HTTPException(exc.status, str(exc)) from exc
+        else:
+            cmd = [
+                sys.executable, "-m", "yt_dlp",
+                "--no-playlist", "--no-progress", "--no-warnings", "--no-part",
+                "--max-filesize", "250M", "--socket-timeout", "15",
+                "--retries", "1", "--fragment-retries", "1",
+                "--format", "best[ext=mp4][height<=720]/best[ext=mp4]/best",
+                "--output", str(directory / "video.%(ext)s"), link
+            ]
+            done = subprocess.run(cmd, capture_output=True, text=True, timeout=DOWNLOAD_TIMEOUT, check=False)
+            if done.returncode != 0:
+                error = (done.stderr or "").lower()
+                if "larger than max-filesize" in error or "file is larger than" in error:
+                    log.warning("%s extractor: file exceeds configured size limit, video=%s", platform, code)
+                    raise HTTPException(413, "Este video supera o limite de 250 MB.")
+                service = "Facebook" if platform == "facebook" else "Instagram"
+                if "429" in error or "too many requests" in error:
+                    reason = "rate_limit"
+                    message = f"O {service} limitou temporariamente o acesso. Tente novamente mais tarde."
+                elif any(word in error for word in ("login", "private", "authentication", "cookies", "not available", "not accessible")):
+                    reason = "login_or_private"
+                    message = f"Este vídeo do {service} pode ser privado ou exigir login. Só baixamos vídeos públicos."
+                else:
+                    reason = "video_unavailable"
+                    message = f"O {service} não liberou este vídeo para o servidor. Confira se o vídeo é público e tente novamente."
+                log.warning("%s extractor failed (reason=%s, code=%s, video=%s)", platform, reason, done.returncode, code)
+                raise HTTPException(422, message)
         videos = [p for p in directory.glob("video.*") if p.is_file() and p.suffix.lower() in {".mp4", ".mov", ".webm"}]
         if not videos:
             raise HTTPException(422, "Não foi possível obter um arquivo de vídeo.")
