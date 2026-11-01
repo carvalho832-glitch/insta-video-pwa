@@ -1,12 +1,12 @@
 # ReelSalva 📲
 
-PWA simples para baixar **Reels e vídeos públicos do Instagram e Facebook**, desde que sejam seus ou você tenha autorização para salvá-los.
+PWA simples para baixar **Reels e vídeos públicos do Instagram, Facebook e Shopee Vídeo**, desde que sejam seus ou você tenha autorização para salvá-los.
 
 ## Como usar
-1. Copie o link de compartilhamento do vídeo no Instagram ou Facebook.
+1. Copie o link de compartilhamento do vídeo no Instagram, Facebook ou Shopee Vídeo.
 2. Abra o PWA, cole o link e toque em **Baixar vídeo MP4**.
 3. No Android, use Chrome > ⋮ > Adicionar à tela inicial para instalar.
-4. Depois de instalado, também pode aparecer na lista de destinos do botão Compartilhar do Instagram ou Facebook.
+4. Depois de instalado, também pode aparecer na lista de destinos do botão Compartilhar do Instagram, Facebook ou Shopee Vídeo.
 
 ## Executar localmente
 Python 3.11+:
@@ -24,6 +24,13 @@ O projeto agora inclui `Dockerfile`, proteção por senha e instruções em [CLO
 
 ## Publicar em Render
 Conecte este repositório a um Web Service Python gratuito. Build: `pip install -r requirements.txt`. Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`. O arquivo `render.yaml` também contém essas definições.
+
+## Suporte ao Shopee Vídeo
+
+- Aceita links curtos de compartilhamento como `https://br.shp.ee/xxxxx` e páginas `https://sv.shopee.com.br/share-video/...`.
+- O servidor segue somente redirecionamentos oficiais da Shopee e lê o arquivo `watermarkVideoUrl` dos dados públicos da página. O MP4 preserva qualquer marca d'água original.
+- Não exige login, não acessa vídeos privados e recusa redirecionamentos/CDNs fora dos domínios permitidos.
+- Nem todos os links da Shopee são vídeos públicos: links para anúncio de produto, live restrita e conteúdo removido podem falhar.
 
 ## Limitações
 Somente vídeos públicos, sem login ou cookies. Instagram e Facebook podem exigir login ou bloquear downloads em IPs de datacenters. Nem todos os vídeos públicos funcionarão. O serviço limita download a 250 MB, 8 tentativas a cada 15 minutos por IP e 2 downloads simultâneos. Para uso de grande escala, implante autenticação, rate limiting distribuído e proteção de rede.
