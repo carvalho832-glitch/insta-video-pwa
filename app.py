@@ -1,4 +1,4 @@
-"""ReelSalva: vídeos públicos Instagram, Facebook e Shopee, sem login ou bypass."""
+"""ReelSalva: vídeos públicos de plataformas aceitas, sem login ou bypass."""
 from __future__ import annotations
 import base64
 import binascii
@@ -84,7 +84,7 @@ class VideoLink(BaseModel):
 def clean_link(value: str):
     found = LINK_RE.search(value.strip())
     if not found:
-        raise ValueError("Cole um link de vídeo do Instagram, Facebook ou Shopee.")
+        raise ValueError("Cole um link de vídeo do Instagram, Facebook, Shopee ou Pinterest.")
     url = urlparse(found.group(0).rstrip(").,;!]"))
     host = (url.hostname or "").lower()
     if url.scheme != "https" or url.username or url.password or url.port is not None:
@@ -123,7 +123,17 @@ def clean_link(value: str):
             return f"https://www.facebook.com/{'/'.join(parts)}/", parts[-1], "facebook"
         raise ValueError("Link do Facebook não reconhecido. Use Compartilhar → Copiar link de um vídeo ou Reel público.")
 
-    raise ValueError("Aceitamos apenas links públicos de Instagram, Facebook e Shopee Vídeo.")
+    if host in {"pinterest.com", "www.pinterest.com", "br.pinterest.com", "m.pinterest.com"}:
+        if len(parts) == 2 and parts[0].lower() == "pin" and re.fullmatch(r"[0-9]{6,30}", parts[1]):
+            return f"https://www.pinterest.com/pin/{parts[1]}/", parts[1], "pinterest"
+        raise ValueError("Link do Pinterest não reconhecido. Use Compartilhar → Copiar link de um Pin de vídeo.")
+
+    if host in {"pin.it", "www.pin.it"}:
+        if len(parts) == 1 and CODE_RE.fullmatch(parts[0]):
+            return f"https://pin.it/{parts[0]}", parts[0], "pinterest"
+        raise ValueError("Link curto do Pinterest inválido.")
+
+    raise ValueError("Aceitamos apenas links de vídeos públicos do Instagram, Facebook, Shopee Vídeo e Pinterest.")
 
 def allow_request(ip: str):
     now = time.monotonic()
@@ -171,8 +181,11 @@ def download(body: VideoLink, request: Request):
                 if "larger than max-filesize" in error or "file is larger than" in error:
                     log.warning("%s extractor: file exceeds configured size limit, video=%s", platform, code)
                     raise HTTPException(413, "Este video supera o limite de 250 MB.")
-                service = "Facebook" if platform == "facebook" else "Instagram"
-                if "429" in error or "too many requests" in error:
+                service = {"facebook": "Facebook", "instagram": "Instagram", "pinterest": "Pinterest"}.get(platform, platform)
+                if platform == "pinterest" and any(word in error for word in ("unsupported url", "no video formats", "no video", "no formats")):
+                    reason = "no_video"
+                    message = "Este Pin não disponibiliza um vídeo para download. Confira se é um Pin de vídeo e se o autor permite salvar."
+                elif "429" in error or "too many requests" in error:
                     reason = "rate_limit"
                     message = f"O {service} limitou temporariamente o acesso. Tente novamente mais tarde."
                 elif any(word in error for word in ("login", "private", "authentication", "cookies", "not available", "not accessible")):
